@@ -1,6 +1,6 @@
 .8086
 .model small
-.stack 100h
+.stack 140h
 .data	
 buf db 64000 dup (?)
 msg1 db "BMP file reader 8086 v1.0 by Sendraz",10,"$"
@@ -95,23 +95,31 @@ GFXMODE:
 	mov bx, hdr[12h];x size (line counter)
 	mov cx, hdr[16h];y size
 	
-	
-	mov si, resa ;resa
-DisplayLoop:
+	xor ax, ax
+	mov si, resa
+ReverseBytes:
 	dec si
-	mov al, [ds:si] ;bmp file pixels
+	mov al, [ds:si] ;bmp file pixels	
+	push ax	
+	dec bx
+	jnz ReverseBytes
+	mov bx, hdr[12h]
+DisplayLineLoop:
+	pop ax
 	mov [es:di], al ;vga pixel buffer
 	inc di	
 	dec bx
-	jnz .skipNewLine
+	jnz DisplayLineLoop
 .NewLine:
 	mov ax, 320
 	sub ax, hdr[12h]
 	add di, ax	
 	mov bx, hdr[12h] 
-.skipNewLine:
+	
 	cmp si, 0
-	jne DisplayLoop
+	jne ReverseBytes
+	
+	
 WaitForInput:
 	mov ah, 0Bh
 	int 21h
